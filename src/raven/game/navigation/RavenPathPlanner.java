@@ -19,6 +19,7 @@ import raven.math.graph.GraphSearchDijkstra;
 import raven.math.graph.SparseGraph;
 import raven.game.*;
 import raven.game.triggers.*;
+import raven.game.navigation.GraphSearchTimeSliced.SearchType;
 import raven.game.navigation.PathEdge;
 import raven.game.messaging.Dispatcher;
 import raven.game.messaging.RavenMessage;
@@ -38,7 +39,14 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 	public static final double SEND_MSG_IMMEDIATELY = 0.0;
 	public static final int    NO_ADDITIONAL_INFO   = 0;
 	public static final int    SENDER_ID_IRRELEVANT = -1;
-	
+	public enum nodeFound {
+		no_closest_node_found(1);
+
+		private int value;
+		private nodeFound(int i) {value = i;}
+		public int getValue() {return value;}
+	};
+
 	private Vector<Double> costToThisNode; 
 
 	private  Vector<EdgeType>  shortestPathTree;
@@ -49,8 +57,8 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 
 	public List<PathEdge> path;
 	private RavenBot ravenBot;
-	private GraphSearchTimeSliced<NodeType,EdgeType,T> currentSearch;
-	private SparseGraph<NodeType, EdgeType> graph=new SparseGraph<NodeType, EdgeType>();
+	private GraphSearchTimeSliced<NodeType,EdgeType,T> currentSearch = new GraphSearchTimeSliced<NodeType, EdgeType, T>();
+	private SparseGraph<NodeType, EdgeType> graph =new SparseGraph<NodeType, EdgeType>();
 	//this is the position the bot wishes to plan a path to reach
 	private  Vector2D destinationPos=new Vector2D();
 
@@ -95,18 +103,14 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 		//node found. This will occur if the navgraph is badly designed or if the bot
 		//has managed to get itself *inside* the geometry (surrounded by walls),
 		//or an obstacle
-		if (ClosestNodeToBot == no_closest_node_found)
+		if (ClosestNodeToBot == nodeFound.no_closest_node_found.getValue())
 		{ 	    return false; 
 		}
 
 		//create an instance of the search algorithm
 		TriggerSystem<Trigger<RavenBot> > t_con; 
-		GraphSearchDijkstra DijSearch;
-
-		currentSearch = new DijSearch(m_NavGraph,
-				ClosestNodeToBot,
-				ItemType);  
-
+		GraphSearchDijkstra DijSearch =new GraphSearchDijkstra(graph, ClosestNodeToBot, ItemType);
+		currentSearch.equals(SearchType.Dijkstra);
 		//register the search with the path manager
 		ravenBot.getWorld().getPathManager().Register(this);
 		return true;
@@ -131,7 +135,7 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 
 		//if the bot requested a path to a location then an edge leading to the
 		//destination must be added
-		if (currentSearch.GetType()== GraphSearchTimeSliced<EdgeType> AStar)
+		if (currentSearch.GetType()== SearchType.AStar)
 		{   
 			path.add(new PathEdge(path.get(path.size()).Destination(), destinationPos,0,0 ));
 		}
@@ -239,7 +243,7 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 		int nd = getClosestNodeToPosition(ravenBot.pos());
 
 		//if no closest node found return failure
-		if (nd == invalid_node_index) return -1;
+		if (nd == GraphNode.INVALID_NODE_INDEX) return -1.0;
 
 		double ClosestSoFar = Double.MAX_VALUE;
 
@@ -302,7 +306,7 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 		//node found. This will occur if the navgraph is badly designed or if the bot
 		//has managed to get itself *inside* the geometry (surrounded by walls),
 		//or an obstacle.
-		if (ClosestNodeToBot == no_closest_node_found)
+		if (ClosestNodeToBot == nodeFound.no_closest_node_found.getValue())
 		{ 
 			return false; 
 		}
@@ -314,18 +318,14 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 		//This sort of thing occurs much more frequently than the above. For
 		//example, if the user clicks inside an area bounded by walls or inside an
 		//object.
-		if (ClosestNodeToTarget == no_closest_node_found)
+		if (ClosestNodeToTarget == nodeFound.no_closest_node_found.getValue())
 		{ 
 			return false; 
 		}		  //create an instance of a the distributed A* search class
-		 //typedef Graph_SearchAStar_TS<Raven_Map::NavGraph, Heuristic_Euclid> AStar;
-		GraphSearchAStar AStar;
-		GraphSearchDijkstra di = new GraphSearchDijkstra(graph, ClosestNodeToBot, ClosestNodeToTarget);
-
-		//TODO 		   
-		currentSearch = new AStar(graph,
-				ClosestNodeToBot,
-				ClosestNodeToTarget);
+		//typedef Graph_SearchAStar_TS<Raven_Map::NavGraph, Heuristic_Euclid> AStar;
+		GraphSearchAStar AStar= new GraphSearchAStar(graph, ClosestNodeToBot, ClosestNodeToTarget);
+		//TODO   
+		currentSearch.equals(SearchType.AStar);
 
 		//and register the search with the path manager
 		ravenBot.getWorld().getPathManager().Register(this);
@@ -382,7 +382,7 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 	{
 		//assert (m_pCurrentSearch && "<Raven_PathPlanner::CycleOnce>: No search object instantiated");
 
-		int result = this.cycleOnce();
+		int result = ((GraphSearchAStar)currentSearch).search();
 
 		//let the bot know of the failure to find a path
 		if (result == 0)
@@ -390,13 +390,13 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 			Dispatcher.dispatchMsg(SEND_MSG_IMMEDIATELY,
 					SENDER_ID_IRRELEVANT,
 					ravenBot.ID(), 
-					Msg_NoPathAvailable,
+					RavenMessage.MSG_NO_PATH_AVAILABLE,
 					NO_ADDITIONAL_INFO);
 
 		}
 
 		//let the bot know a path has been found
-		else(result == 1)
+		else if (result == 1)
 		{
 			//if the search was for an item type then the final node in the path will
 			//represent a giver trigger. Consequently, it's worth passing the pointer
@@ -409,8 +409,8 @@ public class RavenPathPlanner<NodeType extends NavGraphNode<T>,EdgeType extends 
 			Dispatcher.dispatchMsg(SEND_MSG_IMMEDIATELY,
 					SENDER_ID_IRRELEVANT,
 					ravenBot.ID(),
-					Msg_PathReady,
-					pTrigger);
+					RavenMessage.MSG_PATH_READY,
+					NO_ADDITIONAL_INFO);
 		}
 
 		return result;
