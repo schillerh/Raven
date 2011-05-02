@@ -15,6 +15,7 @@ import raven.math.Transformations;
 import raven.math.Vector2D;
 import raven.script.RavenScript;
 import raven.ui.GameCanvas;
+import raven.utils.Log;
 
 /**
  * @author chester
@@ -61,11 +62,11 @@ public class Blaster extends RavenWeapon {
 	
 	@Override
 	public void ShootAt(Vector2D position){
-		if(timeUntilAvailable <= 0){
+		if(isReadyForNextShot()){
 			getOwner().getWorld().addBolt(getOwner(), position);
 
 			UpdateTimeWeaponIsNextAvailable(blasterFiringFreq);
-			
+			Log.debug("Blaster", "blasterFiringFreq:"+blasterFiringFreq);
 			getOwner().getWorld().getMap().addSoundTrigger(getOwner(), RavenScript.getDouble("Blaster_SoundRange"));
 		}
 	}

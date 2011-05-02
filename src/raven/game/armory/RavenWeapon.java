@@ -6,10 +6,13 @@ package raven.game.armory;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sun.servicetag.SystemEnvironment;
+
 import raven.game.RavenBot;
 import raven.game.RavenObject;
 import raven.goals.fuzzy.FuzzyModule;
 import raven.math.Vector2D;
+import raven.utils.Log;
 
 /**
  * @author chester
@@ -102,12 +105,21 @@ public abstract class RavenWeapon {
 	
 	
 	
-	public boolean isReadyForNextShot(double delta) { 
-		timeUntilAvailable -= delta; 
-		return timeUntilAvailable > 0; 
+	public boolean isReadyForNextShot() { 
+		if(System.currentTimeMillis()>timeUntilAvailable) {
+			Log.debug("RavenWeapon", "isReadyForNextShot:timeUntilAvailable: "+timeUntilAvailable+"millis time: "+System.currentTimeMillis());	
+				
+			return true;
+		}
+		return false; 
 	}
 	
-	public void UpdateTimeWeaponIsNextAvailable(double delta) { timeUntilAvailable += (delta + 1.0/rateOfFire); }
+	public void UpdateTimeWeaponIsNextAvailable(double delta) { 
+		
+		timeUntilAvailable = System.currentTimeMillis()+1000*(1.0/delta); 
+		Log.debug("RavenWeapon", "UpdateTimeWeaponIsNextAvailable: delta:"+delta+"timeUntilAvailable: "+timeUntilAvailable);	
+		return;
+	}
 	
 	@SuppressWarnings("unused")
 	private void InitializeFuzzyModule() {}

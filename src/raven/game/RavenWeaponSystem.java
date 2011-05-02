@@ -12,6 +12,7 @@ import raven.game.armory.Shotgun;
 import raven.math.Transformations;
 import raven.math.Vector2D;
 import raven.ui.GameCanvas;
+import raven.utils.Log;
 
 public class RavenWeaponSystem {
 	private RavenBot owner;
@@ -102,7 +103,7 @@ public class RavenWeaponSystem {
 					&& owner.getTargetSys().getTimeTargetHasBeenVisible() > reactionTime
 					&& owner.hasLOSto(aimingPos)) {
 				aimingPos = predictFuturePositionOfTarget();
-				
+			//Log.debug("RavenWeaponSystem", "takeAimAndShoot 1st if");	
 				// if the weapon is aimed correctly, there is line of sight
 				// between the bot and the aiming position and it has been in
 				// view for a period longer than the bot's reaction time,
@@ -113,7 +114,8 @@ public class RavenWeaponSystem {
 					addNoiseToAim(aimingPos);
 					
 					getCurrentWeapon().ShootAt(aimingPos);
-
+					return;
+					//Log.debug("RavenWeaponSystem", "takeAimAndShoot 1st if");	
 				}
 			}
 			// no need to predict movement, aim directly at target
@@ -124,8 +126,9 @@ public class RavenWeaponSystem {
 						&& owner.getTargetSys().getTimeTargetHasBeenVisible() > reactionTime
 						&& owner.hasLOSto(aimingPos)) {
 					addNoiseToAim(aimingPos);
-					
+					//Log.debug("RavenWeaponSystem", "takeAimAndShoot 2nd if");	
 					getCurrentWeapon().ShootAt(aimingPos);
+					return;
 				}
 			}
 		}
@@ -133,7 +136,9 @@ public class RavenWeaponSystem {
 		// bot's heading direction
 		else {
 			owner.rotateFacingTowardPosition(owner.pos().add(owner.heading()), delta);
+			return;
 		}
+		return;
 	}
 
 	public void selectWeapon() {

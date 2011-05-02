@@ -11,6 +11,7 @@ import raven.math.Geometry;
 import raven.math.Vector2D;
 import raven.script.RavenScript;
 import raven.ui.GameCanvas;
+import raven.utils.Log;
 
 /**
  * @author chester
@@ -36,7 +37,9 @@ public class Bolt extends RavenProjectile {
 	@Override
 	public void render() {
 		GameCanvas.thickGreenPen();
+		if (position!=impactPoint) {
 		GameCanvas.line(position, position.sub(velocity));
+		}
 	}
 	
 	public void update(double delta)
@@ -62,16 +65,19 @@ public class Bolt extends RavenProjectile {
 			if (hit != null) {
 				isDead = true;
 				isImpacted = true;
+				Log.debug("Bolt", "hit on bot");
 				// send a message to the bot to let it know it's been hit, and who the
 				// shot came from
 
 				Dispatcher.dispatchMsg(Dispatcher.SEND_MSG_IMMEDIATELY, shooterID, hit.ID(), RavenMessage.MSG_TAKE_THAT_MF, damageInflicted);
+			return;
 			}
 			
 			//test for impact with a wall
 			if (Geometry.FindClosestPointOfIntersectionWithWalls(position.sub(velocity), position, impactPoint, world.getMap().getWalls()) != null) {
 				isDead = true;
 				isImpacted = true;
+				position=impactPoint;
 				
 				return;
 			}

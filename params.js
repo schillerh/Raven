@@ -48,7 +48,7 @@ var GraveLifetime = 5;
 ////////////////////////[[ bot parameters ]]//////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////-
 
-var Bot_Scale           = 8;            // 2*scale = 1/3meter (bounding radius)
+var Bot_Scale           = 8.0;            // 2*scale = 1/3meter (bounding radius)
 var PixelsPerMeter      = 2 * Bot_Scale / (1.0 / 3.0);
 var Bot_MaxHealth       = 100;
 var Bot_MaxSpeed        = 80;    // pixels/second
@@ -130,18 +130,18 @@ var WaypointSeekDist            = 5;
 ////////////////////////-[[ weapon parameters ]]//////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-var Blaster_FiringFreq          = 3;
-var Blaster_MaxSpeed            = 5;
-var Blaster_DefaultRounds       = 0; //not used, a blaster always has ammo
-var Blaster_MaxRoundsCarried    = 0; //as above
-var Blaster_IdealRange          = 50;
-var Blaster_SoundRange          = 100;
+var Blaster_FiringFreq          = 1.0;
+var Blaster_MaxSpeed            = 5.0;
+var Blaster_DefaultRounds       = 100.0; //not used, a blaster always has ammo
+var Blaster_MaxRoundsCarried    = 1000.0; //as above
+var Blaster_IdealRange          = 50.0;
+var Blaster_SoundRange          = 100.0;
 
-var Bolt_MaxSpeed               = 5;
-var Bolt_Mass                   = 1;
+var Bolt_MaxSpeed               = 5.0;
+var Bolt_Mass                   = 1.0;
 var Bolt_MaxForce               = 100.0;
 var Bolt_Scale                  = Bot_Scale;
-var Bolt_Damage                 = 1;
+var Bolt_Damage                 = 1.0;
 
 var RocketLauncher_FiringFreq   = 1.5;
 var RocketLauncher_DefaultRounds    = 15;

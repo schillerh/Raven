@@ -161,7 +161,7 @@ public class Geometry {
 				if (dist < distance)
 				{
 					distance = dist;
-					impactPoint.setValue(point);
+					impactPoint=point;
 				}
 			}
 		}
